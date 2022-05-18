@@ -1,0 +1,225 @@
+---
+title: "assignment"
+author: "Sarika"
+date: '2022-05-18'
+output: html_document
+---
+
+---
+```{r, include=FALSE}
+# install.packages("tidyverse")
+library(tidyverse)
+# install.packages("wooldridge")
+library(wooldridge)
+# install.packages("ggplot2")
+library(ggplot2)
+# install.packages("dplyr")
+library(dplyr)
+# install.packages("modelr")
+library(modelr)
+# tinytex::install_tinytex()
+```
+
+# **Introduction:**
+
+The data set used for this assignment is `wage1`. This data set is from `wooldridge` package. The source of this data is the 1976 Current Population Survey, collected by Henry Farber when he and Jeffrey M. Wooldridge were colleagues at MIT in 1988. The `wooldridge` package contains 115 Data Sets from "Introductory Econometrics: A Modern Approach, 7e" by Jeffrey M. Wooldridge. 
+
+The `wage1` data set contains 526 observations and 24 variables. However, the variables that we will use for the purpose of analysis and to answer the questions include wage (in dollars per hour), educ (years of education), exper (years of potential labor force experience), and female (an indicator for gender). These last variable is a binary variable. 
+
+Regarding plots, we present the default graphs and the graphs from the well-known `ggplot2` package. 
+
+
+```{r exploring data, include=FALSE}
+??wooldridge
+data("wage1")
+?wage1
+colnames(wage1)
+head(wage1)
+str(wage1)
+
+wage1 %>%
+  count(wage)
+
+wage1 %>%
+  count(educ)
+
+wage1 %>%
+  count(exper)
+
+wage1 %>%
+  count(female)
+```
+
+
+## **Descriptive statistics:**
+
+The four variables taken for this assignment are the followings:
+1. wage: average hourly earnings
+2. educ: years of education
+3. exper: years potential experience
+4. female: =1 if female
+
+### Minimum and maximum
+
+Minimum and maximum can be found using the `min()` and `max()` functions. Alternatively, we can also calculate calculate minimum and maximum using `range()` function, which directly provides minimum and maximum values. The minimum and maximum values for the variable wage is 0.53 and 24.98 respectively. 
+
+```{r}
+min(wage1$wage)
+max(wage1$wage)
+range(wage1$wage)
+```
+
+Similarly, we can calculate the minimum and maximum for other variables like education and experience. However, maximum and minimum does not make any sense in case of the binary variable 'female'.
+
+### Range
+
+The range of a variable can be calculated by substracting the minimum value from the maximum value. 
+
+```{r}
+max(wage1$wage) - min(wage1$wage)
+```
+
+### Mean
+
+The mean is calculated in `R` using `mean()` function. The mean years of education can be computed as follows:
+
+```{r}
+mean(wage1$educ)
+```
+Similarly, we can calculate the mean of other variables like wage and experience. 
+
+### Median
+
+The median can be computed thanks to the `median()` function:
+
+```{r}
+median(wage1$exper)
+```
+We can find out the median of other variables with the same methodology. 
+
+### First and third quartile
+
+To calculate first and third quartiles of a variable, `quantile()` function is used. 
+```{r}
+quantile(wage1$wage, 0.25)
+quantile(wage1$wage, 0.75)
+```
+### Interquartile range
+The interquartile range (i.e., the difference between the first and third quartile) can be computed with the IQR() function:
+
+```{r}
+IQR(wage1$wage)
+```
+### Standard deviation and variance
+
+The standard deviation and the variance is computed with the `sd()` and `var()` functions:
+
+```{r}
+sd(wage1$wage)
+var(wage1$wage)
+```
+### Summary
+can compute the minimum, 1st quartile, median, mean, 3rd quartile and the maximum for all numeric variables of a dataset at once using `summary()`:
+
+```{r, include=FALSE}
+summary(wage1$wage)
+summary(wage1$educ)
+summary(wage1$exper)
+```
+
+
+|Summary       | Wage   | Education |Experience|
+|:-----------: | :-----:|:---------:|:--------:|
+|Minimum       | 0.530  |0.00       |1.00      |
+|1st Quartile  | 3.330  |12.00      |5.00      |
+|Median        | 4.650  |12.00      |13.50     |
+|Mean          | 5.896  |12.56      |17.02     |
+|3rd Quartile  | 6.880  |14.00      |26.00     |
+|Maximum       | 24.98  |18.00      |51.00     |
+
+## **Graphics:**
+
+The graphs presented here have been made in `R` using `ggplot2` package. 
+
+### Histogram
+
+A histogram gives an idea about the distribution of a quantitative variable. The idea is to break the range of values into intervals and count how many observations fall into each interval. To draw a histogram in `R`, we use `geom_histogram` of `ggplot` package.
+
+```{r}
+ggplot(data = wage1) +
+  geom_histogram(mapping = aes(x=wage), binwidth = 0.5)
+```
+
+
+```{r}
+ggplot(data = wage1)+
+  geom_histogram(mapping = aes(x=wage), binwidth = 0.5) +
+  facet_wrap(~female)
+```
+
+
+### Scatterplot
+
+Scatterplots allow to check whether there is a potential link between two variables. For this reason, scatterplots are often used to visualize a potential correlation between two variables. For instance, when drawing a scatterplot of the wage and years of education. A scatterplot can be drawn using `geom_point()` in `ggplot`.
+
+```{r}
+ggplot(data = wage1) +
+  geom_point(mapping = aes(x = educ, y = wage))
+```
+
+```{r}
+ggplot(data = wage1) +
+  geom_point(mapping = aes(x = educ, y = wage, colour = factor(female)))+
+  scale_color_hue()
+```
+
+### **Regression:**
+
+From the above scatterplot, we can see that more years of education, leads to higher wages.Now, we will find the return to another year of education, or what the percentage change in wages one might expect for each additional year of education. To do so, one must use the _log(wage)_. This has already been computed in the data set and is defined as `lwage`. First of all we will graph it on scatterplot and then calculate regression. 
+
+```{r}
+ggplot(data = wage1) +
+  geom_point(mapping = aes(x = educ, y = lwage))
+```
+
+The results for the regression results are provided below. 
+
+```{r, eval=FALSE}
+model_1 <- lm(lwage ~ educ, data = wage1)
+summary(model_1)
+```
+
+|              |Dependent variable             | t value | 
+|:------------:|:-----------------------------:|:-------:|
+|              |lwage(Std. Error)              |         | 
+|              |                               |         |  
+|educ          | 0.082744*** (0.007567)        |10.935   |
+|Constant      | 0.583773*** (0.097336)        |5.998    |
+|deg. of free. | 524                           |         |
+|R^2           |0.1858                         |         |
+|Adjusted R^2  |0.1843                         |         |
+|p-value       | < 2.2e-16                     |         | 
+
+```{r}
+ggplot(data = wage1) +
+  geom_point(mapping = aes(x = exper, y = lwage))
+```
+
+
+```{r, eval=FALSE}
+model_2 <- lm(lwage ~ exper, data = wage1)
+summary(model_2)
+```
+
+|              |Dependent variable             | t value | 
+|:------------:|:-----------------------------:|:-------:|
+|              |lwage(Std. Error)              |         | 
+|              |                               |         |  
+|exper         | 0.004362* (0.001700)          |2.565    |
+|Constant      | 1.549043*** (0.036995)        |41.872   |
+|deg. of free. | 524                           |         |
+|R^2           |0.0124                         |         |
+|Adjusted R^2  |0.01052                        |         |
+|p-value       | 0.01058                       |         | 
+
+From the above two regressions, we find that while education play an important role in determining wages, the contribution of experience is not that significant. 
